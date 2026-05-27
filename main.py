@@ -12,6 +12,8 @@ import os
 
 load_dotenv()
 
+MOVIE_DB_IMAGE_URL = "https://image.tmdb.org/t/p/w500"
+
 
 
 app = Flask(__name__)
@@ -69,11 +71,11 @@ def home():
     return render_template("index.html", movies=movies)
 
 
-@app.route("/movies/add", methods=["GET", "POST"])
-def create():
+@app.route("/movies/search", methods=["GET", "POST"])
+def search():
     form = AddMovieForm()
     if request.method == "POST":
-        url = f"https://api.themoviedb.org/3/search/movie?query={form.title.data}&include_adult=true&language=en-US"
+        url = f"https://api.themoviedb.org/3/search/movie?query={form.title.data}&include_adult=true"
         headers = {
             "accept": "application/json",
             "Authorization": f"Bearer {os.getenv("MOVIE_DB_READ_ACCESS_TOKEN")}"
@@ -85,6 +87,31 @@ def create():
         return render_template("select.html", options=movies)
     else:
         return render_template("add.html", form=form)
+
+
+@app.route("/movies/add/<int:movie_id>")
+def create(movie_id):
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}"
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {os.getenv("MOVIE_DB_READ_ACCESS_TOKEN")}"
+    }
+    res = requests.get(url, headers=headers)
+    res.raise_for_status()
+
+    data = res.json()
+
+    new_movie = Movie(
+        title=data["title"],
+        year=int(data["release_date"].split("-")[0]),
+        description=data["overview"],
+        img_url=f"{MOVIE_DB_IMAGE_URL}/{data["poster_path"]}"
+    )
+
+    db.session.add(new_movie)
+    db.session.commit()
+
+    return redirect(url_for('edit', id=new_movie.id))
 
 
 @app.route("/movies/edit/<int:id>", methods=["GET", "POST"])
