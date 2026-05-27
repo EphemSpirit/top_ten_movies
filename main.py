@@ -42,19 +42,6 @@ class Movie(db.Model):
 with app.app_context():
     db.create_all()
 
-# first_movie = Movie(
-#     title="Dumb & Dumber",
-#     year=1994,
-#     description="Two lovable goofballs go on a cross-country adventure to return a woman's briefcase, and find trouble along the way",
-#     rating=10.0,
-#     ranking=1,
-#     review="One of the funniest movies I've ever seen!",
-#     img_url="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic1.srcdn.com%2Fwordpress%2Fwp-content%2Fuploads%2F2023%2F05%2Fdumb-and-dumber-movie-poster.jpg&f=1&nofb=1&ipt=5f23cc34433d929a0a1df783eddcfadc3cb8b6df8f7d6e3c4641fcb628eda9e3"
-# )
-#
-# with app.app_context():
-#     db.session.add(first_movie)
-#     db.session.commit()
 
 class EditMovieForm(FlaskForm):
     rating = StringField(label="Your rating out of 10", name="rating", validators=[DataRequired()])
@@ -67,7 +54,12 @@ class AddMovieForm(FlaskForm):
 
 @app.route("/")
 def home():
-    movies = db.session.execute(db.select(Movie).order_by(Movie.ranking)).scalars()
+    movies = db.session.execute(db.select(Movie).order_by(Movie.rating)).scalars().all()
+
+    for i in range(len(movies)):
+        movies[i].rating = len(movies) - i
+    db.session.commit()
+
     return render_template("index.html", movies=movies)
 
 
