@@ -59,13 +59,35 @@ class EditMovieForm(FlaskForm):
     review = StringField(label="Your Review", name="review", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
+class AddMovieForm(FlaskForm):
+    title = StringField(label="Movie Title", name="title", validators=[DataRequired()])
+    submit = SubmitField(label="Add Movie")
+
 @app.route("/")
 def home():
     movies = db.session.execute(db.select(Movie).order_by(Movie.ranking)).scalars()
     return render_template("index.html", movies=movies)
 
 
-@app.route("/edit/<int:id>", methods=["GET", "POST"])
+@app.route("/movies/add", methods=["GET", "POST"])
+def create():
+    form = AddMovieForm()
+    if request.method == "POST":
+        url = f"https://api.themoviedb.org/3/search/movie?query={form.title.data}&include_adult=true&language=en-US"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {os.getenv("MOVIE_DB_READ_ACCESS_TOKEN")}"
+        }
+        res = requests.get(url, headers=headers)
+        res.raise_for_status()
+
+        movies = res.json()["results"]
+        return render_template("select.html", options=movies)
+    else:
+        return render_template("add.html", form=form)
+
+
+@app.route("/movies/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
     form = EditMovieForm()
     movie = db.get_or_404(Movie, id)
@@ -80,6 +102,14 @@ def edit(id):
             return render_template("edit.html", form=form, movie=movie)
     else:
         return render_template("edit.html", form=form, movie=movie)
+
+
+@app.route("/movies/<int:id>/delete")
+def delete(id):
+    movie = db.get_or_404(Movie, id)
+    db.session.delete(movie)
+    db.session.commit()
+    return redirect(url_for("home"))
 
 
 

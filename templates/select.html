@@ -6,7 +6,9 @@
 <div class="container">
     <h1 class="heading">Select Movie</h1>
   <p>
-    <a href="#"> MOVIE TITLE - MOVIE RELEASE DATE</a>
+    {% for option in options %}
+      <p><a href="#"> {{ option.title }} - {{ option.release_date }}</a></p>
+    {% endfor %}
   </p>
 
 </div>
