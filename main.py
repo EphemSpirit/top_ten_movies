@@ -72,8 +72,8 @@ def edit(id):
 
     if request.method == "POST":
         if form.validate_on_submit():
-            movie.rating = float(request.form["rating"])
-            movie.review = request.form["review"]
+            movie.rating = float(form.rating.data)
+            movie.review = form.review.data
             db.session.commit()
             return redirect(url_for("home"))
         else:
