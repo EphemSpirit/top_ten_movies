@@ -3,4 +3,5 @@ __pycahce__/
 .env
 venv
 .idea
+instance/*
 *.db
